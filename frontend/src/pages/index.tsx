@@ -6,6 +6,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [status, setStatus] = useState<any>(null)
+  const [statusLoading, setStatusLoading] = useState(false)
 
   const handleGenerate = async () => {
     setLoading(true)
@@ -24,6 +26,18 @@ export default function Home() {
       setError('Something went wrong!')
     }
     setLoading(false)
+  }
+
+  const handleStatus = async () => {
+    setStatusLoading(true)
+    try {
+      const res = await fetch('/api/status')
+      const json = await res.json()
+      setStatus(json)
+    } catch (e) {
+      setStatus({ error: 'Unable to fetch status' })
+    }
+    setStatusLoading(false)
   }
 
   return (
@@ -52,6 +66,20 @@ export default function Home() {
           >
             {loading ? 'Generating...' : 'Generate'}
           </button>
+        </div>
+        <div className="mt-6">
+          <button
+            className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded border border-gray-300"
+            onClick={handleStatus}
+            disabled={statusLoading}
+          >
+            {statusLoading ? 'Checking status...' : 'Check service status'}
+          </button>
+          {status && (
+            <pre className="mt-3 text-xs bg-gray-50 border border-gray-200 rounded p-3 overflow-auto">
+{JSON.stringify(status, null, 2)}
+            </pre>
+          )}
         </div>
         {error && <div className="text-red-600 mt-3 text-sm text-center">{error}</div>}
         {downloadUrl && (

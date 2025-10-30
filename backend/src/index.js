@@ -10,6 +10,40 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// GET /health
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// GET /status
+app.get('/status', async (req, res) => {
+  const results = {
+    backend: { ok: true },
+    ollama: { ok: false },
+    frontend: { ok: false },
+    nginx: { ok: false },
+    time: new Date().toISOString()
+  };
+
+  try {
+    const r = await axios.get('http://ollama:11434/api/version', { timeout: 1000 });
+    results.ollama.ok = r.status === 200;
+    results.ollama.version = r.data;
+  } catch (_) {}
+
+  try {
+    const r = await axios.get('http://frontend:3000', { timeout: 1000 });
+    results.frontend.ok = r.status >= 200 && r.status < 500;
+  } catch (_) {}
+
+  try {
+    const r = await axios.get('http://nginx', { timeout: 1000 });
+    results.nginx.ok = r.status >= 200 && r.status < 500;
+  } catch (_) {}
+
+  res.json(results);
+});
+
 // POST /generate
 app.post('/generate', async (req, res) => {
   const { prompt } = req.body;

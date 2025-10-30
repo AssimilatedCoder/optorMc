@@ -48,6 +48,8 @@ while [ $# -gt 0 ]; do
       MODE="prod"; shift ;;
     --build)
       BUILD_FLAG="--build"; shift ;;
+    --status)
+      SHOW_STATUS=1; shift ;;
     --port)
       REQ_PORT="${2:-}"; shift 2 ;;
     *)
@@ -81,11 +83,20 @@ if ! $DC ps | grep -q "Up"; then
   exit 1
 fi
 
-echo "Opening http://localhost:$HOST_PORT ..."
-if [ "$OS" = "Darwin" ]; then
-  open "http://localhost:$HOST_PORT" || true
+if [ -n "${SHOW_STATUS:-}" ]; then
+  echo "Service status:"
+  $DC ps
+  echo
+  echo "HTTP status from backend aggregator (if available):"
+  curl -s "http://localhost:$HOST_PORT/api/status" || true
+  echo
 else
-  xdg-open "http://localhost:$HOST_PORT" 2>/dev/null || true
+  echo "Opening http://localhost:$HOST_PORT ..."
+  if [ "$OS" = "Darwin" ]; then
+    open "http://localhost:$HOST_PORT" || true
+  else
+    xdg-open "http://localhost:$HOST_PORT" 2>/dev/null || true
+  fi
 fi
 
 echo "[optorMc] Done. Access the app at http://localhost:$HOST_PORT"

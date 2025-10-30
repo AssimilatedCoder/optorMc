@@ -35,6 +35,11 @@ services:
       - ./shared-outputs:/app/shared-outputs
     networks:
       - optormc_net
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:5000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\" "]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   ollama:
     image: ollama/ollama:latest
