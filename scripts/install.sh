@@ -40,21 +40,37 @@ fi
 
 MODE="dev"
 BUILD_FLAG=""
-for arg in "$@"; do
-  case "$arg" in
+REQ_PORT=""
+
+while [ $# -gt 0 ]; do
+  case "$1" in
     --prod)
-      MODE="prod";;
+      MODE="prod"; shift ;;
     --build)
-      BUILD_FLAG="--build";;
+      BUILD_FLAG="--build"; shift ;;
+    --port)
+      REQ_PORT="${2:-}"; shift 2 ;;
+    *)
+      shift ;;
   esac
 done
 
+# Determine host port (default 8080 if not provided)
+HOST_PORT_ENV="${HOST_PORT:-}"
+if [ -n "$REQ_PORT" ]; then
+  HOST_PORT="$REQ_PORT"
+elif [ -n "$HOST_PORT_ENV" ]; then
+  HOST_PORT="$HOST_PORT_ENV"
+else
+  HOST_PORT=8080
+fi
+
 if [ "$MODE" = "prod" ]; then
   echo "Bringing up production stack..."
-  $DC -f docker-compose.yml -f docker-compose.prod.yml up -d $BUILD_FLAG
+  HOST_PORT="$HOST_PORT" $DC -f docker-compose.yml -f docker-compose.prod.yml up -d $BUILD_FLAG
 else
   echo "Bringing up development stack..."
-  $DC up -d $BUILD_FLAG
+  HOST_PORT="$HOST_PORT" $DC up -d $BUILD_FLAG
 fi
 
 echo "Waiting for containers to initialize..."
@@ -65,11 +81,11 @@ if ! $DC ps | grep -q "Up"; then
   exit 1
 fi
 
-echo "Opening http://localhost ..."
+echo "Opening http://localhost:$HOST_PORT ..."
 if [ "$OS" = "Darwin" ]; then
-  open http://localhost || true
+  open "http://localhost:$HOST_PORT" || true
 else
-  xdg-open http://localhost 2>/dev/null || true
+  xdg-open "http://localhost:$HOST_PORT" 2>/dev/null || true
 fi
 
-echo "[optorMc] Done. Access the app at http://localhost"
+echo "[optorMc] Done. Access the app at http://localhost:$HOST_PORT"
