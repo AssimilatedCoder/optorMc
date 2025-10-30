@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      target: runner
+    command: ["npm", "run", "start"]
+    volumes: []
+    environment:
+      - NODE_ENV=production
+
+  backend:
+    environment:
+      - NODE_ENV=production
+
+

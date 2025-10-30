@@ -12,7 +12,7 @@ export default function Home() {
     setError('')
     setDownloadUrl(null)
     try {
-      const res = await fetch('http://localhost:5000/generate', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
