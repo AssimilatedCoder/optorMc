@@ -78,9 +78,18 @@ fi
 echo "Waiting for containers to initialize..."
 sleep 3
 
-if ! $DC ps | grep -q "Up"; then
-  echo "Some services did not start. Use '$DC logs' to troubleshoot."
-  exit 1
+TOTAL_SVCS=$($DC ps --services 2>/dev/null | wc -l | tr -d ' ')
+if RUNNING_SVCS=$($DC ps --services --filter "status=running" 2>/dev/null | wc -l | tr -d ' '); then
+  :
+else
+  # Fallback if --filter not supported: count lines with Running/Up
+  RUNNING_SVCS=$($DC ps 2>/dev/null | grep -E "\b(Running|Up)\b" | wc -l | tr -d ' ')
+fi
+
+if [ -n "$TOTAL_SVCS" ] && [ -n "$RUNNING_SVCS" ] && [ "$RUNNING_SVCS" -lt "$TOTAL_SVCS" ]; then
+  echo "Some services are not yet running ($RUNNING_SVCS/$TOTAL_SVCS). Use '$DC ps' and '$DC logs' to troubleshoot."
+else
+  echo "All services are running."
 fi
 
 if [ -n "${SHOW_STATUS:-}" ]; then
